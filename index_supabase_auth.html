@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Nutrition Support Calculator</title>
+
+    <!-- Supabase Authentication -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #1e293b;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 560px;
+        }
+
+        .login-card {
+            background: #ffffff;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.16);
+        }
+
+        .header {
+            background: #1e3a8a;
+            color: #ffffff;
+            padding: 34px 25px 30px;
+            text-align: center;
+        }
+
+        .title {
+            margin: 0;
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .developer-row {
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+        }
+
+        .developer {
+            color: #bfdbfe;
+            font-size: 17px;
+        }
+
+        .linkedin {
+            width: 26px;
+            height: 26px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .linkedin:hover {
+            color: #93c5fd;
+            transform: translateY(-1px);
+        }
+
+        .linkedin svg {
+            width: 21px;
+            height: 21px;
+            fill: currentColor;
+        }
+
+        .role {
+            margin-top: 5px;
+            color: #93c5fd;
+            font-size: 14px;
+            font-style: italic;
+        }
+
+        .body {
+            padding: 32px 30px 30px;
+        }
+
+        .welcome {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .welcome h2 {
+            margin: 0 0 7px;
+            color: #1e3a8a;
+            font-size: 22px;
+        }
+
+        .welcome p {
+            margin: 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .field {
+            margin-bottom: 17px;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #334155;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 9px;
+            background: #ffffff;
+            font-size: 16px;
+            direction: ltr;
+            text-align: left;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .login-btn {
+            width: 100%;
+            background: #2563eb;
+            color: #ffffff;
+            padding: 13px;
+            border: none;
+            border-radius: 9px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 7px;
+            transition: 0.2s;
+        }
+
+        .login-btn:hover {
+            background: #1e3a8a;
+            transform: translateY(-1px);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .message {
+            min-height: 22px;
+            margin-top: 16px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .activation-card {
+            margin-top: 22px;
+            padding: 18px;
+            background: #f8fafc;
+            border: 1px solid #dbeafe;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .activation-title {
+            color: #1e3a8a;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .activation-card p {
+            margin: 6px 0;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .whatsapp-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 10px 0;
+            padding: 10px 18px;
+            border-radius: 8px;
+            background: #16a34a;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+            transition: 0.2s;
+        }
+
+        .whatsapp-btn:hover {
+            background: #15803d;
+            transform: translateY(-1px);
+        }
+
+        .whatsapp-icon {
+            width: 19px;
+            height: 19px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .whatsapp-icon svg {
+            width: 19px;
+            height: 19px;
+            fill: currentColor;
+        }
+
+        .activation-ar {
+            direction: rtl;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 14px !important;
+            padding-top: 12px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 0 30px 25px;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        @media (max-width: 520px) {
+
+            .title {
+                font-size: 24px;
+            }
+
+            .header {
+                padding: 28px 18px 24px;
+            }
+
+            .body {
+                padding: 26px 20px 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="login-wrapper">
+
+    <div class="login-card">
+
+        <div class="header">
+
+            <h1 class="title">
+                Nutrition Support Calculator
+            </h1>
+
+            <div class="developer-row">
+
+                <span class="developer">
+                    Developed by Dr. Ahmed Galal
+                </span>
+
+                <a
+                    href="https://www.linkedin.com/in/ahmad-galal-a1200714b"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="linkedin"
+                    aria-label="LinkedIn"
+                >
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.762 2.239 5 5 5h14c2.762 0 5-2.238 5-5v-14c0-2.761-2.239-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                    </svg>
+
+                </a>
+
+            </div>
+
+            <div class="role">
+                Nutrition Support Pharmacist
+            </div>
+
+        </div>
+
+        <div class="body">
+
+            <div class="welcome">
+
+                <h2>
+                    Subscriber Login
+                </h2>
+
+                <p>
+                    Enter your email and password to access the calculator.
+                </p>
+
+            </div>
+
+            <form id="login-form">
+
+                <div class="field">
+
+                    <label for="email">
+                        Email
+                    </label>
+
+                    <input
+                        id="email"
+                        type="email"
+                        autocomplete="username"
+                        placeholder="Enter your email"
+                        required
+                    >
+
+                </div>
+
+                <div class="field">
+
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <input
+                        id="password"
+                        type="password"
+                        autocomplete="current-password"
+                        placeholder="Enter password"
+                        required
+                    >
+
+                </div>
+
+                <button
+                    class="login-btn"
+                    type="submit"
+                >
+                    LOGIN
+                </button>
+
+            </form>
+
+            <div
+                id="message"
+                class="message"
+                aria-live="polite"
+            ></div>
+
+            <div class="activation-card">
+
+                <div class="activation-title">
+                    Subscription & Account Activation
+                </div>
+
+                <p>
+                    To subscribe and activate your account, please contact us via WhatsApp.
+                    Payment is available through
+                    <strong>Vodafone Cash</strong> or
+                    <strong>InstaPay</strong>.
+                </p>
+
+                <a
+                    href="https://wa.me/201094199634"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="whatsapp-btn"
+                    aria-label="Contact us on WhatsApp"
+                >
+
+                    <span class="whatsapp-icon">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path d="M20.52 3.48A11.86 11.86 0 0 0 12.07 0C5.5 0 .15 5.35.15 11.92c0 2.1.55 4.15 1.6 5.96L.05 24l6.27-1.64a11.86 11.86 0 0 0 5.75 1.47h.01c6.57 0 11.92-5.35 11.92-11.92 0-3.18-1.24-6.17-3.48-8.43zM12.08 21.8h-.01a9.84 9.84 0 0 1-5.02-1.37l-.36-.21-3.72.98.99-3.63-.23-.37a9.83 9.83 0 0 1-1.51-5.28C2.22 6.49 6.64 2.07 12.08 2.07c2.64 0 5.12 1.03 6.98 2.9a9.8 9.8 0 0 1 2.89 6.98c0 5.44-4.43 9.85-9.87 9.85zm5.41-7.38c-.3-.15-1.77-.87-2.05-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.25-.46-2.38-1.46-.88-.78-1.47-1.74-1.64-2.04-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.89 1.22 3.09c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.5 1.69.64.71.23 1.36.2 1.87.12.57-.08 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35z"/>
+                        </svg>
+
+                    </span>
+
+                    WhatsApp: 01094199634
+
+                </a>
+
+                <p class="activation-ar">
+
+                    <strong>
+                        الاشتراك وتفعيل الحساب
+                    </strong>
+                    <br>
+
+                    للاشتراك وتفعيل حسابك، يرجى التواصل معنا عبر
+                    <strong>WhatsApp</strong>.
+                    الدفع متاح عبر
+                    <strong>Vodafone Cash</strong>
+                    أو
+                    <strong>InstaPay</strong>.
+                    <br>
+
+                    سيتم تفعيل الحساب بعد تأكيد الدفع.
+
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="footer">
+            Authorized subscribers only
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+/* =========================================================
+   SUPABASE AUTHENTICATION
+   Authentication only.
+   Clinical calculator functionality is untouched.
+   ========================================================= */
+
+(function () {
+
+    const form =
+        document.getElementById("login-form");
+
+    const message =
+        document.getElementById("message");
+
+
+    /* -----------------------------------------------------
+       Supabase configuration
+       The publishable/anon key is intended for browser use.
+       NEVER place a service_role/secret key here.
+       ----------------------------------------------------- */
+
+    const SUPABASE_URL =
+        "https://gbnjvtlkltmcmjrmewos.supabase.co";
+
+    const SUPABASE_PUBLISHABLE_KEY =
+        "sb_publishable_OYddt412ZGjfDrxCTacgsA_7JH2SzZI";
+
+    const supabaseClient =
+        window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_PUBLISHABLE_KEY
+        );
+
+
+    /* -----------------------------------------------------
+       Display message
+       ----------------------------------------------------- */
+
+    function showMessage(text, color) {
+
+        message.textContent = text;
+        message.style.color = color;
+
+    }
+
+
+    /* -----------------------------------------------------
+       Login
+       Supabase Authentication
+       ----------------------------------------------------- */
+
+    form.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+            const email =
+                document
+                    .getElementById("email")
+                    .value
+                    .trim()
+                    .toLowerCase();
+
+            const password =
+                document
+                    .getElementById("password")
+                    .value;
+
+
+            if (!email || !password) {
+
+                showMessage(
+                    "Please enter your email and password.",
+                    "#dc2626"
+                );
+
+                return;
+            }
+
+
+            showMessage(
+                "Signing in...",
+                "#2563eb"
+            );
+
+
+            try {
+
+                const {
+                    data,
+                    error
+                } =
+                    await supabaseClient.auth.signInWithPassword({
+                        email: email,
+                        password: password
+                    });
+
+
+                if (error) {
+
+                    console.error(
+                        "Supabase login error:",
+                        error
+                    );
+
+                    showMessage(
+                        "Invalid email or password.",
+                        "#dc2626"
+                    );
+
+                    return;
+                }
+
+
+                if (!data || !data.user) {
+
+                    showMessage(
+                        "Unable to complete login.",
+                        "#dc2626"
+                    );
+
+                    return;
+                }
+
+
+                /* -------------------------------------------------
+                   Store authentication state
+                   ------------------------------------------------- */
+
+                sessionStorage.setItem(
+                    "user_authenticated",
+                    "true"
+                );
+
+                sessionStorage.setItem(
+                    "authenticated_email",
+                    data.user.email || email
+                );
+
+
+                /* -------------------------------------------------
+                   Open protected calculator
+                   ------------------------------------------------- */
+
+                window.location.href =
+                    "/protected/NSC.html";
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Unexpected authentication error:",
+                    error
+                );
+
+                showMessage(
+                    "Unable to connect to the authentication service.",
+                    "#dc2626"
+                );
+
+            }
+
+        }
+    );
+
+})();
+</script>
+
+</body>
+        </html>
