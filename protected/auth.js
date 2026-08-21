@@ -28,6 +28,24 @@
 
 
     /* =========================================================
+       CHECK SUPABASE LIBRARY
+       ========================================================= */
+
+    if (
+        !window.supabase ||
+        typeof window.supabase.createClient !== "function"
+    ) {
+
+        console.error(
+            "Supabase JS library is not loaded."
+        );
+
+        return;
+
+    }
+
+
+    /* =========================================================
        CREATE SUPABASE CLIENT
        ========================================================= */
 
@@ -40,7 +58,6 @@
 
     /*
      * Make the client available globally.
-     * This can also be used by NSC.html later.
      */
 
     window.NSC_SUPABASE =
@@ -49,7 +66,7 @@
 
     /* =========================================================
        HELPER
-       Display message
+       DISPLAY MESSAGE
        ========================================================= */
 
     function showMessage(
@@ -80,10 +97,12 @@
 
     /* =========================================================
        HELPER
-       Normalize Email
+       NORMALIZE EMAIL
        ========================================================= */
 
-    function normalizeEmail(email) {
+    function normalizeEmail(
+        email
+    ) {
 
         return (
             email || ""
@@ -152,7 +171,9 @@
                 .maybeSingle();
 
 
-        if (result.error) {
+        if (
+            result.error
+        ) {
 
             throw result.error;
 
@@ -190,7 +211,7 @@
 
 
         /* -----------------------------------------------------
-           Get profile
+           GET PROFILE
            ----------------------------------------------------- */
 
         const profile =
@@ -261,7 +282,7 @@
 
 
         /* -----------------------------------------------------
-           APPROVED
+           ONLY APPROVED ACCOUNTS CAN CONTINUE
            ----------------------------------------------------- */
 
         if (
@@ -287,7 +308,7 @@
 
 
         /* -----------------------------------------------------
-           No subscription date
+           SUBSCRIPTION DATE REQUIRED
            ----------------------------------------------------- */
 
         if (
@@ -307,13 +328,65 @@
 
 
         /* -----------------------------------------------------
-           Parse expiration date
-           ----------------------------------------------------- */
+           DATE-ONLY PARSING
+           -----------------------------------------------------
+
+           subscription_end is a PostgreSQL DATE.
+
+           We intentionally parse the date using local
+           components to avoid UTC/time-zone problems.
+        ----------------------------------------------------- */
+
+        const parts =
+            String(
+                profile.subscription_end
+            )
+                .split("-");
+
+
+        if (
+            parts.length !== 3
+        ) {
+
+            return {
+
+                allowed: false,
+
+                message:
+                    "Your subscription end date is invalid. Please contact the administrator."
+
+            };
+
+        }
+
+
+        const year =
+            Number(
+                parts[0]
+            );
+
+
+        const month =
+            Number(
+                parts[1]
+            );
+
+
+        const day =
+            Number(
+                parts[2]
+            );
+
 
         const expireDate =
             new Date(
-                profile.subscription_end +
-                "T23:59:59"
+                year,
+                month - 1,
+                day,
+                23,
+                59,
+                59,
+                999
             );
 
 
@@ -336,7 +409,7 @@
 
 
         /* -----------------------------------------------------
-           Expired
+           CHECK EXPIRATION
            ----------------------------------------------------- */
 
         if (
@@ -357,7 +430,7 @@
 
 
         /* -----------------------------------------------------
-           Everything OK
+           ACCESS GRANTED
            ----------------------------------------------------- */
 
         return {
@@ -396,7 +469,7 @@
 
 
         /* -----------------------------------------------------
-           Supabase error
+           SUPABASE ERROR
            ----------------------------------------------------- */
 
         if (
@@ -423,7 +496,7 @@
 
 
         /* -----------------------------------------------------
-           Check approval + subscription
+           CHECK APPROVAL + SUBSCRIPTION
            ----------------------------------------------------- */
 
         const access =
@@ -431,6 +504,10 @@
                 user
             );
 
+
+        /* -----------------------------------------------------
+           NOT AUTHORIZED
+           ----------------------------------------------------- */
 
         if (
             !access.allowed
@@ -449,7 +526,7 @@
 
 
         /* -----------------------------------------------------
-           Compatibility session
+           COMPATIBILITY SESSION
            ----------------------------------------------------- */
 
         sessionStorage.setItem(
@@ -565,7 +642,7 @@
 
 
         /* =====================================================
-           CHANGE LOGIN / SIGNUP MODE
+           SWITCH LOGIN / SIGNUP
            ===================================================== */
 
         function setMode(
@@ -588,7 +665,9 @@
                     : "none";
 
 
-            if (authTitle) {
+            if (
+                authTitle
+            ) {
 
                 authTitle.textContent =
                     isSignup
@@ -598,7 +677,9 @@
             }
 
 
-            if (authSubtitle) {
+            if (
+                authSubtitle
+            ) {
 
                 authSubtitle.textContent =
                     isSignup
@@ -608,7 +689,9 @@
             }
 
 
-            if (toggleButton) {
+            if (
+                toggleButton
+            ) {
 
                 toggleButton.textContent =
                     isSignup
@@ -630,7 +713,9 @@
            TOGGLE BUTTON
            ===================================================== */
 
-        if (toggleButton) {
+        if (
+            toggleButton
+        ) {
 
             toggleButton.addEventListener(
                 "click",
@@ -778,7 +863,7 @@
 
 
                 /* -------------------------------------------------
-                   Password confirmation
+                   PASSWORD CONFIRMATION
                    ------------------------------------------------- */
 
                 if (
@@ -797,7 +882,7 @@
 
 
                 /* -------------------------------------------------
-                   Minimum password length
+                   PASSWORD LENGTH
                    ------------------------------------------------- */
 
                 if (
@@ -830,12 +915,11 @@
 
 
                     /*
-                     * Confirm Email is OFF.
+                     * Email confirmation is expected to be OFF.
                      *
-                     * Supabase may return an active session.
-                     *
-                     * We immediately sign out because
-                     * the new account is still PENDING.
+                     * If Supabase returns a session,
+                     * immediately sign out because the new
+                     * account is still PENDING.
                      */
 
                     if (
@@ -936,7 +1020,7 @@
 
 
         /* -----------------------------------------------------
-           No session
+           NO SESSION
            ----------------------------------------------------- */
 
         if (!session) {
@@ -973,7 +1057,7 @@
 
 
             /* -------------------------------------------------
-               Compatibility session
+               COMPATIBILITY SESSION
                ------------------------------------------------- */
 
             sessionStorage.setItem(
@@ -1013,7 +1097,7 @@
 
 
         /* =====================================================
-           PERIODIC CHECK
+           PERIODIC ACCOUNT CHECK
            ===================================================== */
 
         setInterval(
@@ -1079,7 +1163,7 @@
 
 
         /* =====================================================
-           CHECK WHEN RETURNING TO APP
+           CHECK WHEN RETURNING TO APPLICATION
            ===================================================== */
 
         document.addEventListener(
@@ -1156,14 +1240,48 @@
 
 
     /* =========================================================
+       AUTH STATE MONITORING
+       ========================================================= */
+
+    supabaseClient.auth.onAuthStateChange(
+        function (
+            event,
+            session
+        ) {
+
+            console.log(
+                "Supabase auth event:",
+                event
+            );
+
+
+            if (
+                event === "SIGNED_OUT"
+            ) {
+
+                sessionStorage.removeItem(
+                    "user_authenticated"
+                );
+
+
+                sessionStorage.removeItem(
+                    "authenticated_email"
+                );
+
+            }
+
+        }
+    );
+
+
+    /* =========================================================
        INITIALIZE
        ========================================================= */
 
     async function initialize() {
 
         /*
-         * If login + signup forms exist,
-         * this is the login page.
+         * LOGIN / SIGNUP PAGE
          */
 
         if (
@@ -1177,13 +1295,65 @@
 
             setupLoginPage();
 
+            /*
+             * If the user already has a Supabase session,
+             * verify it and redirect if approved.
+             */
+
+            try {
+
+                const result =
+                    await supabaseClient
+                        .auth
+                        .getSession();
+
+
+                const session =
+                    result.data &&
+                    result.data.session;
+
+
+                if (
+                    session
+                ) {
+
+                    const access =
+                        await checkAccountAccess(
+                            session.user
+                        );
+
+
+                    if (
+                        access.allowed
+                    ) {
+
+                        window.location.replace(
+                            "/protected/NSC.html"
+                        );
+
+                    }
+
+                }
+
+            } catch (
+                error
+            ) {
+
+                console.error(
+                    "Initial session check error:",
+                    error
+                );
+
+            }
+
+
             return;
 
         }
 
 
         /*
-         * Otherwise this is a protected page.
+         * PROTECTED APPLICATION PAGE
          */
 
         await protectApplication();
@@ -1195,6 +1365,20 @@
        START
        ========================================================= */
 
-    initialize();
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            initialize
+        );
+
+    } else {
+
+        initialize();
+
+    }
 
 })();
