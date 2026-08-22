@@ -1755,4 +1755,474 @@
             }
         };
 
-    async function nsc
+    async function nscLoadAdmin() {
+
+        const p =
+            await getProfile();
+
+        if (!state.admin) {
+
+            $('nsc-admin-denied')
+                ?.classList
+                .remove('hidden');
+
+            $('nsc-admin-content')
+                ?.classList
+                .add('hidden');
+
+            return;
+        }
+
+        $('nsc-admin-denied')
+            ?.classList
+            .add('hidden');
+
+        $('nsc-admin-content')
+            ?.classList
+            .remove('hidden');
+
+        const {
+            data,
+            error
+        } = await db()
+            .from('profiles')
+            .select('*')
+            .order(
+                'created_at',
+                { ascending: false }
+            );
+
+        if (error) throw error;
+
+        const users =
+            data || [];
+
+        if ($('nsc-admin-users'))
+            $('nsc-admin-users')
+                .textContent =
+                users.length;
+
+        if ($('nsc-admin-approved'))
+            $('nsc-admin-approved')
+                .textContent =
+                users.filter(
+                    x =>
+                        x.status ===
+                        'approved'
+                ).length;
+
+        if ($('nsc-admin-pending'))
+            $('nsc-admin-pending')
+                .textContent =
+                users.filter(
+                    x =>
+                        x.status ===
+                        'pending'
+                ).length;
+
+        if ($('nsc-admin-expiring'))
+            $('nsc-admin-expiring')
+                .textContent =
+                users.filter(
+                    x =>
+                        x.subscription_end &&
+                        daysBetween(
+                            today(),
+                            x.subscription_end
+                        ) >= 0 &&
+                        daysBetween(
+                            today(),
+                            x.subscription_end
+                        ) <= 7
+                ).length;
+
+        const body =
+            $('nsc-admin-body');
+
+        if (!body) return;
+
+        body.innerHTML =
+            users
+                .map(
+                    x =>
+                        `<tr>
+
+                            <td>
+                                <b>
+                                    ${esc(
+                                        x.full_name ||
+                                        x.name ||
+                                        '—'
+                                    )}
+                                </b>
+                            </td>
+
+                            <td>
+                                ${esc(
+                                    x.email ||
+                                    '—'
+                                )}
+                            </td>
+
+                            <td>
+                                ${esc(
+                                    x.status ||
+                                    '—'
+                                )}
+                            </td>
+
+                            <td>
+                                ${esc(
+                                    x.subscription_end ||
+                                    '—'
+                                )}
+                            </td>
+
+                            <td>
+                                ${esc(
+                                    x.role ||
+                                    'user'
+                                )}
+                            </td>
+
+                        </tr>`
+                )
+                .join('') ||
+
+            '<tr>' +
+            '<td colspan="5" class="nsc-empty">' +
+            'No users found.' +
+            '</td>' +
+            '</tr>';
+    }
+
+    window.nscLibraryAddBook =
+        function () {
+
+            nscToast(
+                'Library interface is ready; book storage will be connected to the Library database when available.'
+            );
+        };
+
+    window.nscToggleLanguage =
+        function () {
+
+            nscToast(
+                'Arabic interface can be connected to the existing language switch next.'
+            );
+        };
+
+    /* =========================================================
+       WRAP EXISTING PATIENT MANAGEMENT FUNCTIONS
+       The original clinical engine is NOT replaced.
+       ========================================================= */
+
+    function wrap(name, after) {
+
+        const original =
+            window[name];
+
+        if (
+            typeof original !==
+            'function'
+        ) {
+            return;
+        }
+
+        window[name] =
+            async function (...args) {
+
+                const r =
+                    await original.apply(
+                        this,
+                        args
+                    );
+
+                try {
+
+                    await after(
+                        r,
+                        args
+                    );
+
+                } catch (e) {
+
+                    console.error(
+                        'NSC shell wrapper',
+                        name,
+                        e
+                    );
+                }
+
+                return r;
+            };
+    }
+
+    /* Register Patient modal */
+
+    wrap(
+        'openPatientModal',
+        async () => {
+
+            document.body
+                .classList
+                .add(
+                    'nsc-modal-active'
+                );
+        }
+    );
+
+    wrap(
+        'closePatientModal',
+        async () => {
+
+            document.body
+                .classList
+                .remove(
+                    'nsc-modal-active'
+                );
+
+            if (
+                state.page ===
+                'patients'
+            ) {
+
+                setLegacy('none');
+            }
+        }
+    );
+
+    /* Open patient */
+
+    wrap(
+        'selectPatient',
+        async () => {
+
+            nscHidePagesForLegacy(
+                'detail'
+            );
+        }
+    );
+
+    /* New encounter */
+
+    wrap(
+        'startNewVisit',
+        async () => {
+
+            nscHidePagesForLegacy(
+                'visit'
+            );
+        }
+    );
+
+    /* Return from patient */
+
+    wrap(
+        'backToPatientHome',
+        async () => {
+
+            setLegacy('none');
+
+            setActivePage(
+                'patients'
+            );
+
+            await nscLoadPatients();
+        }
+    );
+
+    /* Return from visit */
+
+    wrap(
+        'backToPatientDetail',
+        async () => {
+
+            nscHidePagesForLegacy(
+                'detail'
+            );
+        }
+    );
+
+    /* Delete patient */
+
+    wrap(
+        'deleteSelectedPatient',
+        async () => {
+
+            setLegacy('none');
+
+            setActivePage(
+                'patients'
+            );
+
+            await nscLoadPatients();
+        }
+    );
+
+    /* Save patient */
+
+    wrap(
+        'savePatientFromForm',
+        async () => {
+
+            if (
+                state.page ===
+                'patients'
+            ) {
+
+                await nscLoadPatients();
+            }
+        }
+    );
+
+    /* Save visit */
+
+    wrap(
+        'saveCurrentVisit',
+        async () => {
+
+            nscHidePagesForLegacy(
+                'detail'
+            );
+        }
+    );
+
+    /* =========================================================
+       OBSERVE ORIGINAL CLINICAL ENGINE
+       ========================================================= */
+
+    function observeLegacy() {
+
+        const detail =
+            $('patient-detail-view');
+
+        const visit =
+            $('visit-screen');
+
+        if (
+            !detail ||
+            !visit
+        ) {
+            return;
+        }
+
+        const obs =
+            new MutationObserver(
+                () => {
+
+                    if (
+                        state.page !==
+                        'patients'
+                    ) {
+                        return;
+                    }
+
+                    const vd =
+                        getComputedStyle(
+                            visit
+                        ).display !==
+                        'none';
+
+                    const dd =
+                        getComputedStyle(
+                            detail
+                        ).display !==
+                        'none';
+
+                    if (
+                        vd &&
+                        !dd
+                    ) {
+
+                        document.body
+                            .classList
+                            .add(
+                                'nsc-legacy-visible',
+                                'nsc-visit-active'
+                            );
+
+                    } else if (
+                        dd &&
+                        !vd
+                    ) {
+
+                        document.body
+                            .classList
+                            .add(
+                                'nsc-legacy-visible',
+                                'nsc-detail-active'
+                            );
+                    }
+                }
+            );
+
+        obs.observe(
+            detail,
+            {
+                attributes: true,
+                attributeFilter: [
+                    'style',
+                    'class'
+                ]
+            }
+        );
+
+        obs.observe(
+            visit,
+            {
+                attributes: true,
+                attributeFilter: [
+                    'style',
+                    'class'
+                ]
+            }
+        );
+    }
+
+    /* =========================================================
+       INITIALIZATION
+       ========================================================= */
+
+    async function init() {
+
+        try {
+
+            await getProfile();
+
+        } catch (e) {
+
+            console.error(e);
+        }
+
+        observeLegacy();
+
+        setActivePage(
+            'home'
+        );
+
+        await nscLoadHome();
+    }
+
+    if (
+        document.readyState ===
+        'loading'
+    ) {
+
+        document.addEventListener(
+            'DOMContentLoaded',
+            init,
+            {
+                once: true
+            }
+        );
+
+    } else {
+
+        setTimeout(
+            init,
+            0
+        );
+    }
+
+})();
